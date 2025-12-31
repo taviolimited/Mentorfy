@@ -85,42 +85,81 @@ const AvailabilityCalendar: React.FC<{ availableDays: string[] }> = ({ available
 };
 
 export const WelcomeView: React.FC<{ 
+  menteeName: string | null,
+  onNameSubmit: (name: string) => void,
   onSelect: (g: LearningGoal) => void,
   onLearnMore: () => void 
-}> = ({ onSelect, onLearnMore }) => (
-  <div className="flex-1 flex flex-col items-center text-center">
-    <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Welcome to Mentorfy</h2>
-    <p className="text-lg text-gray-500 mb-12">First things first, what's your primary learning goal today?</p>
-    
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-12">
-      {(['Career Transition', 'Skill Mastery', 'Portfolio Review'] as LearningGoal[]).map((goal) => (
-        <button
-          key={goal}
-          onClick={() => onSelect(goal)}
-          className="group p-8 border-2 border-gray-100 rounded-2xl hover:border-indigo-600 hover:bg-indigo-50 transition-all duration-200 text-left flex flex-col items-center md:items-start"
-        >
-          <GoalIcon type={goal} />
-          <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-700">{goal}</h3>
-          <p className="text-sm text-gray-500 text-center md:text-left line-clamp-2">
-            {goal === 'Career Transition' && "Get guidance on changing paths, industries, or landing a new role."}
-            {goal === 'Skill Mastery' && "Deep dive into specific technical or soft skills with an expert."}
-            {goal === 'Portfolio Review' && "Get expert feedback on your projects, case studies, or resume."}
-          </p>
-        </button>
-      ))}
-    </div>
+}> = ({ menteeName, onNameSubmit, onSelect, onLearnMore }) => {
+  const [nameInput, setNameInput] = useState('');
 
-    <button 
-      onClick={onLearnMore}
-      className="text-indigo-600 font-semibold hover:text-indigo-800 flex items-center gap-2 group transition-all"
-    >
-      <span>New to mentorship? Learn why it matters</span>
-      <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-      </svg>
-    </button>
-  </div>
-);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (nameInput.trim()) {
+      onNameSubmit(nameInput.trim());
+    }
+  };
+
+  if (!menteeName) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-center animate-fadeIn">
+        <h2 className="text-4xl font-extrabold text-gray-900 mb-2">Ready to grow?</h2>
+        <p className="text-lg text-gray-500 mb-8">First, let's get to know you.</p>
+        <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+          <input
+            autoFocus
+            type="text"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            placeholder="Enter your name"
+            className="w-full px-6 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl text-lg font-medium text-gray-900 focus:border-indigo-600 focus:bg-white outline-none transition-all placeholder:text-gray-400"
+          />
+          <button
+            type="submit"
+            disabled={!nameInput.trim()}
+            className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold text-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-100"
+          >
+            Start Your Journey
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 flex flex-col items-center text-center animate-fadeIn">
+      <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Hi, <span className="text-indigo-600">{menteeName}</span>!</h2>
+      <p className="text-lg text-gray-500 mb-12">What's your primary learning goal today?</p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-12">
+        {(['Career Transition', 'Skill Mastery', 'Portfolio Review'] as LearningGoal[]).map((goal) => (
+          <button
+            key={goal}
+            onClick={() => onSelect(goal)}
+            className="group p-8 border-2 border-gray-100 rounded-2xl hover:border-indigo-600 hover:bg-indigo-50 transition-all duration-200 text-left flex flex-col items-center md:items-start"
+          >
+            <GoalIcon type={goal} />
+            <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-700">{goal}</h3>
+            <p className="text-sm text-gray-500 text-center md:text-left line-clamp-2">
+              {goal === 'Career Transition' && "Get guidance on changing paths, industries, or landing a new role."}
+              {goal === 'Skill Mastery' && "Deep dive into specific technical or soft skills with an expert."}
+              {goal === 'Portfolio Review' && "Get expert feedback on your projects, case studies, or resume."}
+            </p>
+          </button>
+        ))}
+      </div>
+
+      <button 
+        onClick={onLearnMore}
+        className="text-indigo-600 font-semibold hover:text-indigo-800 flex items-center gap-2 group transition-all"
+      >
+        <span>New to mentorship? Learn why it matters</span>
+        <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </button>
+    </div>
+  );
+};
 
 export const WhyMentorshipView: React.FC<{ onBack: () => void }> = ({ onBack }) => (
   <div className="flex-1 flex flex-col">
@@ -151,11 +190,11 @@ export const SearchView: React.FC<{
   onSearch: (industry: Industry, level: ExperienceLevel, lang: Language, budget: BudgetRange, days: DayOfWeek[], slots: TimeSlot[]) => void,
   onBack: () => void 
 }> = ({ onSearch, onBack }) => {
-  const [industry, setIndustry] = useState<Industry>('Fintech');
-  const [level, setLevel] = useState<ExperienceLevel>('Beginner');
-  const [lang, setLang] = useState<Language>('English');
-  const [budget, setBudget] = useState<BudgetRange>('$20 - $50');
-  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(['Monday', 'Wednesday', 'Friday']);
+  const [industry, setIndustry] = useState<Industry | ''>('');
+  const [level, setLevel] = useState<ExperienceLevel | ''>('');
+  const [lang, setLang] = useState<Language | ''>('');
+  const [budget, setBudget] = useState<BudgetRange | ''>('');
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
   const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
 
   const industries: Industry[] = ['Fintech', 'EdTech', 'SaaS', 'HealthTech', 'E-commerce', 'AI & ML'];
@@ -178,6 +217,8 @@ export const SearchView: React.FC<{
   const toggleSlot = (slot: TimeSlot) => {
     setSelectedSlots(prev => prev.includes(slot) ? prev.filter(s => s !== slot) : [...prev, slot]);
   };
+
+  const isFormValid = industry !== '' && level !== '' && lang !== '' && budget !== '' && selectedDays.length > 0 && selectedSlots.length > 0;
 
   return (
     <div className="flex-1 flex flex-col">
@@ -222,9 +263,10 @@ export const SearchView: React.FC<{
             <select 
               value={lang} 
               onChange={(e) => setLang(e.target.value as Language)}
-              className="w-full p-3 border-2 border-gray-100 rounded-xl focus:border-indigo-600 focus:ring-0 outline-none transition-colors"
+              className={`w-full p-3 border-2 rounded-xl bg-white focus:border-indigo-600 focus:ring-0 outline-none transition-colors appearance-none ${lang === '' ? 'border-gray-100 text-gray-500' : 'border-indigo-600 text-gray-900 font-semibold'}`}
             >
-              {languages.map(l => <option key={l} value={l}>{l}</option>)}
+              <option value="" disabled className="text-gray-400">Select Language</option>
+              {languages.map(l => <option key={l} value={l} className="text-gray-900">{l}</option>)}
             </select>
           </section>
 
@@ -233,9 +275,10 @@ export const SearchView: React.FC<{
             <select 
               value={budget} 
               onChange={(e) => setBudget(e.target.value as BudgetRange)}
-              className="w-full p-3 border-2 border-gray-100 rounded-xl focus:border-indigo-600 focus:ring-0 outline-none transition-colors"
+              className={`w-full p-3 border-2 rounded-xl bg-white focus:border-indigo-600 focus:ring-0 outline-none transition-colors appearance-none ${budget === '' ? 'border-gray-100 text-gray-500' : 'border-indigo-600 text-gray-900 font-semibold'}`}
             >
-              {budgets.map(b => <option key={b} value={b}>{b}</option>)}
+              <option value="" disabled className="text-gray-400">Select Budget Range</option>
+              {budgets.map(b => <option key={b} value={b} className="text-gray-900">{b}</option>)}
             </select>
           </section>
         </div>
@@ -271,9 +314,9 @@ export const SearchView: React.FC<{
         </section>
 
         <button 
-          onClick={() => onSearch(industry, level, lang, budget, selectedDays, selectedSlots)}
-          disabled={selectedDays.length === 0 || selectedSlots.length === 0}
-          className={`w-full mt-10 py-4 text-white rounded-xl font-bold text-lg shadow-xl shadow-indigo-100 transition-all hover:-translate-y-0.5 ${selectedDays.length === 0 || selectedSlots.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+          onClick={() => isFormValid && onSearch(industry as Industry, level as ExperienceLevel, lang as Language, budget as BudgetRange, selectedDays, selectedSlots)}
+          disabled={!isFormValid}
+          className={`w-full mt-10 py-4 text-white rounded-xl font-bold text-lg shadow-xl transition-all hover:-translate-y-0.5 ${!isFormValid ? 'bg-gray-300 cursor-not-allowed shadow-none' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'}`}
         >
           Discover Mentors
         </button>
@@ -408,17 +451,18 @@ export const ProfileView: React.FC<{ mentor: Mentor, onBook: () => void, onBack:
 );
 
 export const DashboardView: React.FC<{ 
+  menteeName: string | null,
   sessions: Session[], 
   goal: LearningGoal | null,
   recommendedMentors: Mentor[],
   onFindMore: () => void,
   onViewMentor: (m: Mentor) => void
-}> = ({ sessions, goal, recommendedMentors, onFindMore, onViewMentor }) => {
+}> = ({ menteeName, sessions, goal, recommendedMentors, onFindMore, onViewMentor }) => {
   return (
-    <div className="flex-1 space-y-12">
+    <div className="flex-1 space-y-12 animate-fadeIn">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="text-4xl font-black text-gray-900 tracking-tight">Welcome back!</h2>
+          <h2 className="text-4xl font-black text-gray-900 tracking-tight">Welcome back, <span className="text-indigo-600">{menteeName || 'Mentee'}</span>!</h2>
           <p className="text-gray-500 text-lg">You're making great progress towards <span className="text-indigo-600 font-bold">"{goal || 'your goals'}"</span>.</p>
         </div>
         <button 
@@ -522,14 +566,19 @@ export const DashboardView: React.FC<{
   );
 };
 
-export const ConfirmedView: React.FC<{ mentor: Mentor, onGoToDashboard: () => void, onReset: () => void }> = ({ mentor, onGoToDashboard, onReset }) => (
-  <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+export const ConfirmedView: React.FC<{ 
+  menteeName: string | null,
+  mentor: Mentor, 
+  onGoToDashboard: () => void, 
+  onReset: () => void 
+}> = ({ menteeName, mentor, onGoToDashboard, onReset }) => (
+  <div className="flex-1 flex flex-col items-center justify-center text-center py-12 animate-fadeIn">
     <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
       <svg className="w-12 h-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
       </svg>
     </div>
-    <h2 className="text-4xl font-extrabold text-gray-900 mb-4">You're all set!</h2>
+    <h2 className="text-4xl font-extrabold text-gray-900 mb-4">You're all set, <span className="text-indigo-600">{menteeName || 'friend'}</span>!</h2>
     <p className="text-xl text-gray-600 mb-8 max-w-md">
       Your session with <span className="font-bold text-indigo-600">{mentor.name}</span> has been booked.
     </p>

@@ -14,6 +14,7 @@ import { generateMentors } from './services/geminiService';
 
 const App: React.FC = () => {
   const [step, setStep] = useState<Step>('WELCOME');
+  const [menteeName, setMenteeName] = useState<string | null>(null);
   const [selectedGoal, setSelectedGoal] = useState<LearningGoal | null>(null);
   const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(null);
   const [selectedExperience, setSelectedExperience] = useState<ExperienceLevel | null>(null);
@@ -28,6 +29,10 @@ const App: React.FC = () => {
   // Dashboard specific state
   const [bookedSessions, setBookedSessions] = useState<Session[]>([]);
   const [hasVisitedDashboard, setHasVisitedDashboard] = useState(false);
+
+  const handleNameSubmit = (name: string) => {
+    setMenteeName(name);
+  };
 
   const handleGoalSelect = (goal: LearningGoal) => {
     setSelectedGoal(goal);
@@ -114,6 +119,8 @@ const App: React.FC = () => {
     >
       {step === 'WELCOME' && (
         <WelcomeView 
+          menteeName={menteeName}
+          onNameSubmit={handleNameSubmit}
           onSelect={handleGoalSelect} 
           onLearnMore={() => setStep('WHY_MENTORSHIP')}
         />
@@ -149,6 +156,7 @@ const App: React.FC = () => {
       
       {step === 'BOOKING_CONFIRMED' && selectedMentor && (
         <ConfirmedView 
+          menteeName={menteeName}
           mentor={selectedMentor} 
           onGoToDashboard={goToDashboard}
           onReset={handleReset} 
@@ -157,6 +165,7 @@ const App: React.FC = () => {
 
       {step === 'DASHBOARD' && (
         <DashboardView 
+          menteeName={menteeName}
           sessions={bookedSessions}
           goal={selectedGoal}
           recommendedMentors={mentors.filter(m => !bookedSessions.find(s => s.mentor.id === m.id))}
