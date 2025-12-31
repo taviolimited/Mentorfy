@@ -8,7 +8,13 @@ export type Language = 'English' | 'Spanish' | 'French' | 'Mandarin' | 'Hindi' |
 
 export type BudgetRange = 'Free (Community)' | '$20 - $50' | '$50 - $100' | '$100+';
 
-export type PreferredDays = 'Weekdays' | 'Weekends' | 'Mon - Wed' | 'Thu - Fri' | 'Fully Flexible';
+export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+
+export type TimeSlot = 
+  | '8:00 AM' | '9:00 AM' | '10:00 AM' | '11:00 AM' 
+  | '12:00 PM' | '1:00 PM' | '2:00 PM' | '3:00 PM' 
+  | '4:00 PM' | '5:00 PM' | '6:00 PM' | '7:00 PM' 
+  | '8:00 PM' | '9:00 PM';
 
 export interface Mentor {
   id: string;
@@ -24,7 +30,16 @@ export interface Mentor {
   sessionCount: number;
   languages: string[];
   hourlyRate: string;
-  availability: string[]; // Days of the week like ['Monday', 'Tuesday']
+  availability: string[];
+  timeSlots: TimeSlot[];
 }
 
-export type Step = 'WELCOME' | 'SEARCH' | 'RECOMMENDATIONS' | 'PROFILE_VIEW' | 'BOOKING_CONFIRMED' | 'WHY_MENTORSHIP';
+export interface Session {
+  id: string;
+  mentor: Mentor;
+  date: string;
+  time: string;
+  status: 'upcoming' | 'completed' | 'canceled';
+}
+
+export type Step = 'WELCOME' | 'SEARCH' | 'RECOMMENDATIONS' | 'PROFILE_VIEW' | 'BOOKING_CONFIRMED' | 'WHY_MENTORSHIP' | 'DASHBOARD';

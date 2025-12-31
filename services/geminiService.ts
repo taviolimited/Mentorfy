@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { Mentor, LearningGoal, Industry, ExperienceLevel, Language, BudgetRange, PreferredDays } from "../types";
+import { Mentor, LearningGoal, Industry, ExperienceLevel, Language, BudgetRange, DayOfWeek, TimeSlot } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
@@ -27,19 +27,23 @@ export async function generateMentors(
   level: ExperienceLevel, 
   language: Language, 
   budget: BudgetRange,
-  days: PreferredDays
+  days: DayOfWeek[],
+  slots: TimeSlot[]
 ): Promise<Mentor[]> {
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Generate 6 realistic professional mentor profiles for a mentee interested in ${goal} within the ${industry} industry. 
-    The mentee identifies as ${level} level, prefers communication in ${language}, and has a budget preference of ${budget} per session. 
-    Crucially, the mentee is looking for mentors available during ${days}.
-    Each mentor should be significantly more experienced than the mentee and fluent in ${language}.
+    The mentee is at a ${level} level, prefers communication in ${language}, and has a budget preference of ${budget} per session. 
     
-    IMPORTANT: For each mentor, you must select one URL from the following list of professional headshots that best fits the profile you generate:
+    IMPORTANT: The mentee is specifically looking for mentors available on these days: ${days.join(', ')} 
+    during these specific hourly time slots: ${slots.join(', ')}.
+    
+    Each mentor generated must be significantly more experienced than the mentee and fluent in ${language}.
+    
+    For each mentor, select one URL from the following list of professional headshots:
     ${PHOTO_POOL.join('\n')}
 
-    Each profile should include:
+    Each profile must include:
     - A professional name
     - A relevant job title at a famous or plausible tech company
     - A compelling 3-sentence bio
@@ -49,8 +53,9 @@ export async function generateMentors(
     - Number of sessions between 50 and 500
     - A list of languages they speak (must include ${language})
     - An hourly rate that fits within the ${budget} range (if 'Free', set to 'Free')
-    - The selected avatar URL from the list provided above
-    - An 'availability' array containing full names of days they are typically free (e.g., ["Monday", "Wednesday"]). This MUST align with the chosen preference: ${days}.`,
+    - The selected avatar URL
+    - An 'availability' array containing full names of days they are free (MUST include at least some of the days the user requested: ${days.join(', ')})
+    - A 'timeSlots' array containing specific hourly slots (MUST include some of: ${slots.join(', ')})`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -78,13 +83,17 @@ export async function generateMentors(
               items: { type: Type.STRING }
             },
             hourlyRate: { type: Type.STRING },
-            avatar: { type: Type.STRING, description: "Must be one of the provided Unsplash URLs" },
+            avatar: { type: Type.STRING },
             availability: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            timeSlots: {
               type: Type.ARRAY,
               items: { type: Type.STRING }
             }
           },
-          required: ["id", "name", "role", "company", "bio", "successStories", "mentoringStyle", "rating", "sessionCount", "languages", "hourlyRate", "avatar", "availability"]
+          required: ["id", "name", "role", "company", "bio", "successStories", "mentoringStyle", "rating", "sessionCount", "languages", "hourlyRate", "avatar", "availability", "timeSlots"]
         }
       }
     }

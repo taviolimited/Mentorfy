@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LearningGoal, Industry, Mentor, ExperienceLevel, Language, BudgetRange, PreferredDays } from '../types';
+import { LearningGoal, Industry, Mentor, ExperienceLevel, Language, BudgetRange, DayOfWeek, TimeSlot, Session } from '../types';
 
 const GoalIcon = ({ type }: { type: LearningGoal }) => {
   const paths = {
@@ -33,7 +33,6 @@ const AvailabilityCalendar: React.FC<{ availableDays: string[] }> = ({ available
   const month = today.toLocaleString('default', { month: 'long' });
   const year = today.getFullYear();
 
-  // Simple calendar logic for the current month
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
   const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
   
@@ -149,20 +148,36 @@ export const WhyMentorshipView: React.FC<{ onBack: () => void }> = ({ onBack }) 
 );
 
 export const SearchView: React.FC<{ 
-  onSearch: (industry: Industry, level: ExperienceLevel, lang: Language, budget: BudgetRange, days: PreferredDays) => void,
+  onSearch: (industry: Industry, level: ExperienceLevel, lang: Language, budget: BudgetRange, days: DayOfWeek[], slots: TimeSlot[]) => void,
   onBack: () => void 
 }> = ({ onSearch, onBack }) => {
   const [industry, setIndustry] = useState<Industry>('Fintech');
   const [level, setLevel] = useState<ExperienceLevel>('Beginner');
   const [lang, setLang] = useState<Language>('English');
   const [budget, setBudget] = useState<BudgetRange>('$20 - $50');
-  const [days, setDays] = useState<PreferredDays>('Fully Flexible');
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(['Monday', 'Wednesday', 'Friday']);
+  const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
 
   const industries: Industry[] = ['Fintech', 'EdTech', 'SaaS', 'HealthTech', 'E-commerce', 'AI & ML'];
   const levels: ExperienceLevel[] = ['Beginner', 'Intermediate', 'Advanced', 'Senior/Lead'];
   const languages: Language[] = ['English', 'Spanish', 'French', 'Mandarin', 'Hindi', 'Arabic', 'Portuguese'];
   const budgets: BudgetRange[] = ['Free (Community)', '$20 - $50', '$50 - $100', '$100+'];
-  const preferredDays: PreferredDays[] = ['Weekdays', 'Weekends', 'Mon - Wed', 'Thu - Fri', 'Fully Flexible'];
+  const daysOfWeek: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  
+  const hourlySlots: TimeSlot[] = [
+    '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', 
+    '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', 
+    '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', 
+    '8:00 PM', '9:00 PM'
+  ];
+
+  const toggleDay = (day: DayOfWeek) => {
+    setSelectedDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
+  };
+
+  const toggleSlot = (slot: TimeSlot) => {
+    setSelectedSlots(prev => prev.includes(slot) ? prev.filter(s => s !== slot) : [...prev, slot]);
+  };
 
   return (
     <div className="flex-1 flex flex-col">
@@ -226,23 +241,39 @@ export const SearchView: React.FC<{
         </div>
 
         <section>
-          <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Preferred Days</label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {preferredDays.map(d => (
+          <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Available Days</label>
+          <div className="flex flex-wrap gap-2">
+            {daysOfWeek.map(d => (
               <button
                 key={d}
-                onClick={() => setDays(d)}
-                className={`px-4 py-2 rounded-xl border-2 transition-all font-medium ${days === d ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-100 hover:border-gray-300 text-gray-600'}`}
+                onClick={() => toggleDay(d)}
+                className={`px-4 py-2 rounded-xl border-2 transition-all font-medium ${selectedDays.includes(d) ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-100 hover:border-gray-300 text-gray-600'}`}
               >
-                {d}
+                {d.slice(0, 3)}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Preferred Time Slots (Hourly)</label>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+            {hourlySlots.map(s => (
+              <button
+                key={s}
+                onClick={() => toggleSlot(s)}
+                className={`px-2 py-2 rounded-lg border-2 text-center text-[11px] sm:text-xs transition-all font-bold ${selectedSlots.includes(s) ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-100 hover:border-gray-300 text-gray-600'}`}
+              >
+                {s}
               </button>
             ))}
           </div>
         </section>
 
         <button 
-          onClick={() => onSearch(industry, level, lang, budget, days)}
-          className="w-full mt-10 py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all hover:-translate-y-0.5"
+          onClick={() => onSearch(industry, level, lang, budget, selectedDays, selectedSlots)}
+          disabled={selectedDays.length === 0 || selectedSlots.length === 0}
+          className={`w-full mt-10 py-4 text-white rounded-xl font-bold text-lg shadow-xl shadow-indigo-100 transition-all hover:-translate-y-0.5 ${selectedDays.length === 0 || selectedSlots.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
         >
           Discover Mentors
         </button>
@@ -326,6 +357,13 @@ export const ProfileView: React.FC<{ mentor: Mentor, onBook: () => void, onBack:
         <section>
           <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">Availability</h3>
           <AvailabilityCalendar availableDays={mentor.availability} />
+          <div className="mt-4 flex flex-wrap gap-1">
+            {mentor.timeSlots.map(slot => (
+              <span key={slot} className="px-2 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded">
+                {slot}
+              </span>
+            ))}
+          </div>
         </section>
       </div>
       <div className="flex-1">
@@ -369,7 +407,122 @@ export const ProfileView: React.FC<{ mentor: Mentor, onBook: () => void, onBack:
   </div>
 );
 
-export const ConfirmedView: React.FC<{ mentor: Mentor, onReset: () => void }> = ({ mentor, onReset }) => (
+export const DashboardView: React.FC<{ 
+  sessions: Session[], 
+  goal: LearningGoal | null,
+  recommendedMentors: Mentor[],
+  onFindMore: () => void,
+  onViewMentor: (m: Mentor) => void
+}> = ({ sessions, goal, recommendedMentors, onFindMore, onViewMentor }) => {
+  return (
+    <div className="flex-1 space-y-12">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-4xl font-black text-gray-900 tracking-tight">Welcome back!</h2>
+          <p className="text-gray-500 text-lg">You're making great progress towards <span className="text-indigo-600 font-bold">"{goal || 'your goals'}"</span>.</p>
+        </div>
+        <button 
+          onClick={onFindMore}
+          className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+        >
+          Discover New Mentors
+        </button>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Stats & Goals */}
+        <div className="space-y-6">
+          <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+            <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">Learning Path</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">Initial Discovery</span>
+                <span className="text-green-500 font-bold">✓</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">First Session Booked</span>
+                <span className="text-green-500 font-bold">✓</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-400 italic">Portfolio Feedback</span>
+                <span className="text-gray-300">○</span>
+              </div>
+              <div className="w-full bg-gray-200 h-2 rounded-full mt-6">
+                <div className="bg-indigo-600 h-2 rounded-full w-[40%]"></div>
+              </div>
+              <p className="text-[10px] text-gray-400 font-bold text-right uppercase">40% Complete</p>
+            </div>
+          </div>
+
+          <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-xl shadow-indigo-100">
+            <h3 className="text-sm font-black text-indigo-200 uppercase tracking-widest mb-2">Mentor Quote</h3>
+            <p className="text-lg font-medium italic">"The only way to do great work is to love what you do. Guidance helps you find that love faster."</p>
+          </div>
+        </div>
+
+        {/* Right Column: Sessions */}
+        <div className="lg:col-span-2 space-y-6">
+          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            Upcoming Sessions
+            <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full">{sessions.length}</span>
+          </h3>
+          
+          {sessions.length > 0 ? (
+            <div className="space-y-4">
+              {sessions.map(session => (
+                <div key={session.id} className="flex items-center gap-4 p-4 border border-gray-100 rounded-2xl hover:border-indigo-100 hover:bg-indigo-50/30 transition-all group">
+                  <img src={session.mentor.avatar} className="w-16 h-16 rounded-full object-cover ring-2 ring-gray-100" />
+                  <div className="flex-1">
+                    <h4 className="font-bold text-gray-900 group-hover:text-indigo-700 transition-colors">{session.mentor.name}</h4>
+                    <p className="text-xs text-gray-500">{session.mentor.role} @ {session.mentor.company}</p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <span className="text-xs font-bold text-indigo-600 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        {session.date}
+                      </span>
+                      <span className="text-xs font-bold text-indigo-600 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {session.time}
+                      </span>
+                    </div>
+                  </div>
+                  <button className="px-4 py-2 border border-indigo-200 text-indigo-600 text-xs font-bold rounded-xl hover:bg-indigo-600 hover:text-white transition-all">
+                    Join Link
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-12 border-2 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center text-center">
+              <p className="text-gray-400 mb-4">No sessions booked yet.</p>
+              <button onClick={onFindMore} className="text-indigo-600 font-bold hover:underline">Book your first mentor</button>
+            </div>
+          )}
+
+          <div className="pt-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-6">Mentors you might like</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {recommendedMentors.slice(0, 2).map(mentor => (
+                <div key={mentor.id} onClick={() => onViewMentor(mentor)} className="p-4 border border-gray-100 rounded-2xl cursor-pointer hover:shadow-md transition-all">
+                  <div className="flex items-center gap-3 mb-3">
+                    <img src={mentor.avatar} className="w-10 h-10 rounded-full object-cover" />
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-900">{mentor.name}</h4>
+                      <p className="text-[10px] text-gray-500">{mentor.role}</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 line-clamp-2">{mentor.bio}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const ConfirmedView: React.FC<{ mentor: Mentor, onGoToDashboard: () => void, onReset: () => void }> = ({ mentor, onGoToDashboard, onReset }) => (
   <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
     <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
       <svg className="w-12 h-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -380,8 +533,13 @@ export const ConfirmedView: React.FC<{ mentor: Mentor, onReset: () => void }> = 
     <p className="text-xl text-gray-600 mb-8 max-w-md">
       Your session with <span className="font-bold text-indigo-600">{mentor.name}</span> has been booked.
     </p>
-    <button onClick={onReset} className="px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black">
-      Start New Discovery
-    </button>
+    <div className="flex flex-col sm:flex-row gap-4">
+      <button onClick={onGoToDashboard} className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+        Go to My Dashboard
+      </button>
+      <button onClick={onReset} className="px-8 py-3 bg-white border-2 border-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-all">
+        Discover More
+      </button>
+    </div>
   </div>
 );

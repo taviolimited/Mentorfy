@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { 
   WelcomeView, 
@@ -6,9 +6,10 @@ import {
   RecommendationsView, 
   ProfileView, 
   ConfirmedView,
-  WhyMentorshipView
+  WhyMentorshipView,
+  DashboardView
 } from './components/StepViews';
-import { Step, LearningGoal, Industry, Mentor, ExperienceLevel, Language, BudgetRange, PreferredDays } from './types';
+import { Step, LearningGoal, Industry, Mentor, ExperienceLevel, Language, BudgetRange, DayOfWeek, TimeSlot, Session } from './types';
 import { generateMentors } from './services/geminiService';
 
 const App: React.FC = () => {
@@ -18,38 +19,43 @@ const App: React.FC = () => {
   const [selectedExperience, setSelectedExperience] = useState<ExperienceLevel | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [selectedBudget, setSelectedBudget] = useState<BudgetRange | null>(null);
-  const [selectedDays, setSelectedDays] = useState<PreferredDays | null>(null);
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
+  const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Dashboard specific state
+  const [bookedSessions, setBookedSessions] = useState<Session[]>([]);
+  const [hasVisitedDashboard, setHasVisitedDashboard] = useState(false);
 
   const handleGoalSelect = (goal: LearningGoal) => {
     setSelectedGoal(goal);
     setStep('SEARCH');
   };
 
-  const handleSearch = async (industry: Industry, level: ExperienceLevel, lang: Language, budget: BudgetRange, days: PreferredDays) => {
+  const handleSearch = async (industry: Industry, level: ExperienceLevel, lang: Language, budget: BudgetRange, days: DayOfWeek[], slots: TimeSlot[]) => {
     setSelectedIndustry(industry);
     setSelectedExperience(level);
     setSelectedLanguage(lang);
     setSelectedBudget(budget);
     setSelectedDays(days);
+    setSelectedSlots(slots);
     
     setStep('RECOMMENDATIONS');
     setIsLoading(true);
     
     try {
-      if (selectedGoal) {
-        const results = await generateMentors(
-          selectedGoal, 
-          industry, 
-          level, 
-          lang,
-          budget,
-          days
-        );
-        setMentors(results);
-      }
+      const results = await generateMentors(
+        selectedGoal || 'Career Transition', 
+        industry, 
+        level, 
+        lang,
+        budget,
+        days,
+        slots
+      );
+      setMentors(results);
     } catch (error) {
       console.error("Error generating mentors:", error);
     } finally {
@@ -63,19 +69,27 @@ const App: React.FC = () => {
   };
 
   const handleBooking = () => {
-    setStep('BOOKING_CONFIRMED');
+    if (selectedMentor) {
+      const newSession: Session = {
+        id: Math.random().toString(36).substr(2, 9),
+        mentor: selectedMentor,
+        date: "Monday, Oct 12", // Mocked date
+        time: selectedMentor.timeSlots[0] || "10:00 AM",
+        status: 'upcoming'
+      };
+      setBookedSessions(prev => [newSession, ...prev]);
+      setStep('BOOKING_CONFIRMED');
+    }
   };
 
   const handleReset = () => {
     setStep('WELCOME');
-    setSelectedGoal(null);
-    setSelectedIndustry(null);
-    setSelectedExperience(null);
-    setSelectedLanguage(null);
-    setSelectedBudget(null);
-    setSelectedDays(null);
-    setMentors([]);
     setSelectedMentor(null);
+  };
+
+  const goToDashboard = () => {
+    setStep('DASHBOARD');
+    setHasVisitedDashboard(true);
   };
 
   const getStepNumber = (): number => {
@@ -86,12 +100,18 @@ const App: React.FC = () => {
       case 'RECOMMENDATIONS': return 3;
       case 'PROFILE_VIEW': return 4;
       case 'BOOKING_CONFIRMED': return 5;
+      case 'DASHBOARD': return 5;
       default: return 1;
     }
   };
 
   return (
-    <Layout step={getStepNumber()} onLogoClick={handleReset}>
+    <Layout 
+      step={getStepNumber()} 
+      onLogoClick={handleReset}
+      onDashboardClick={goToDashboard}
+      showDashboardLink={bookedSessions.length > 0}
+    >
       {step === 'WELCOME' && (
         <WelcomeView 
           onSelect={handleGoalSelect} 
@@ -130,7 +150,18 @@ const App: React.FC = () => {
       {step === 'BOOKING_CONFIRMED' && selectedMentor && (
         <ConfirmedView 
           mentor={selectedMentor} 
+          onGoToDashboard={goToDashboard}
           onReset={handleReset} 
+        />
+      )}
+
+      {step === 'DASHBOARD' && (
+        <DashboardView 
+          sessions={bookedSessions}
+          goal={selectedGoal}
+          recommendedMentors={mentors.filter(m => !bookedSessions.find(s => s.mentor.id === m.id))}
+          onFindMore={handleReset}
+          onViewMentor={handleMentorSelect}
         />
       )}
     </Layout>
