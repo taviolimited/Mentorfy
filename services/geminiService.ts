@@ -1,7 +1,9 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { Mentor, LearningGoal, Industry, ExperienceLevel, Language, BudgetRange, DayOfWeek, TimeSlot } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// Always use the process.env.API_KEY string directly for initialization as per guidelines
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const PHOTO_POOL = [
   "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&h=400&auto=format&fit=crop",
